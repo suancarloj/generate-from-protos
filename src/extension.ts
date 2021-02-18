@@ -119,9 +119,53 @@ export function activate(context: vscode.ExtensionContext) {
       }
     },
   );
+  let disposableService = vscode.commands.registerCommand(
+    'extension.generateModel',
+    () => {
+      // The code you place here will be executed every time your command is executed
 
-  // context.subscriptions.push(disposableMapper);
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      let code = ``;
+      let reverse: boolean = false;
+
+      for (let selection of editor.selections) {
+        reverse = selection.isReversed;
+      }
+
+      let selections: vscode.Selection[];
+      if (reverse) {
+        selections = editor.selections.reverse();
+      } else {
+        selections = editor.selections;
+      }
+
+      for (let selection of selections) {
+        code += editor.document.getText(selection);
+        code += `\n`;
+      }
+
+      let text = code;
+
+      if (text.length < 1) {
+        vscode.window.showErrorMessage('No selected properties.');
+        return;
+      }
+
+      try {
+        var model = createService(text);
+        vscode.env.clipboard.writeText(model);
+      } catch (error) {
+        console.log(error);
+        vscode.window.showErrorMessage('Something went wrong! look in the vscode developer tools"');
+      }
+    },
+  );
+
   context.subscriptions.push(disposableModel);
+  context.subscriptions.push(disposableService);
 }
 
 function pascalCase(str: string) {
@@ -205,7 +249,7 @@ function createModel(textProperties: string) {
   });
 
   const generatedCode = `
-interface ${className}Props {
+export interface ${className}Props {
 ${interfaces}}
 
 export class ${className} {
@@ -215,6 +259,30 @@ ${properties}
 ${constructors}  }
 
 ${getters}}
+`;
+
+  return generatedCode;
+}
+
+
+function createService(textProperties: string) {
+  let rows = textProperties
+    .split('\n')
+    .map((x) => x.replace(/[{};]/, '').trim())
+    .filter((x) => x);
+  
+  const interfaceRow = rows.shift();
+  const interfaceMatch = interfaceRow?.match(/interface (\w+)(<(.*)>)?/);
+  const [,interfaceName,interfaceType] = interfaceMatch ?? [];
+
+  const functions = rows.map(r => `  async ${r} {\r\n\r\n  }\r\n\r\n`).join('');
+
+  const generatedCode = `
+import { Inject, Injectable } from '@nestjs/common';
+
+@Injectable()
+export class ${interfaceName} implements ${interfaceName}${interfaceType ?? ''} {
+${functions}}
 `;
 
   return generatedCode;

@@ -2,7 +2,7 @@
   "name": "generate-from-protos",
   "displayName": "Automatic generate typescript class from a proto",
   "description": "Automatic generate typescript class from a proto",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "publisher": "suancarloj",
   "author": "Juan Carlos Sanchez Cardenas <jcsanchezcardenas@gmail.com>",
   "repository": {
@@ -20,7 +20,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.generateModel"
+    "onCommand:extension.generateModel",
+    "onCommand:extension.generateService"
   ],
   "main": "./out/extension",
   "contributes": {
@@ -30,8 +31,8 @@
         "title": "Generate Model"
       },
       {
-        "command": "extension.generateMapper",
-        "title": "Generate Mapper"
+        "command": "extension.generateService",
+        "title": "Generate Service"
       }
     ]
   },
