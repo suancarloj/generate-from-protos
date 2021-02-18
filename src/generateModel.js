@@ -37,7 +37,6 @@ const selection = `message Contract {
   string updated_at = 26;
 }`;
 
-
 const grpcTypesMap = {
   double: 'number',
   float: 'number',
@@ -67,16 +66,19 @@ function createModel(textProperties) {
         .trim(),
     )
     .filter((x) => x);
-  const sortedRows = rows.sort((a, b) => a.split(' ').reverse()[0] < b.split(' ').reverse()[0]? -1 : 1)
+  const sortedRows = rows.sort((a, b) =>
+    a.split(' ').reverse()[0] < b.split(' ').reverse()[0] ? -1 : 1,
+  );
   // let properties: Array<string> = [];
-  let properties = [];
+  let properties = '';
+  let className = '';
+  let camelClassName = '';
+  let interfaces = '';
+  let constructors = '';
+  let getters = '';
+  let tests = '';
 
-  let className,
-    camelClassName,
-    interfaces = '',
-    constructors = '',
-    getters = '';
-    sortedRows.forEach((r) => {
+  sortedRows.forEach((r) => {
     const row = r.split(' ').reverse();
     const [property, type, ...rules] = row;
 
@@ -106,11 +108,20 @@ function createModel(textProperties) {
       )}(): ${t}${optionalReturnType} {\r\n`;
       getters += `    return this.${prop};\r\n`;
       getters += `  }\r\n\r\n`;
+
+      tests += `  it('New Set/Get ${prop}', async () => {\r\n`;
+      tests += `    const ${camelClassName}Props: ${camelClassName}Props = {\r\n`;
+      tests += `      ${prop}: ,\r\n`;
+      tests += `    };\r\n\r\n`;
+      tests += `    const ${camelClassName} = new ${className}(${camelClassName}Props);\r\n`;
+      tests += `    await expect(${camelClassName}.get${pascalCase(
+        prop,
+      )}()).toEqual(${camelClassName}Props.${prop});\r\n`;
+      tests += `  });\r\n\r\n`;
     }
-    console.log(r);
   });
 
-  const generatedCode = `
+  const model = `
 interface ${className}Props {
 ${interfaces}}
 
@@ -122,6 +133,15 @@ ${constructors}  }
 
 ${getters}}
 `;
+
+  const test = `
+import { ${className}, ${className}Props } from './${className}';
+describe('${className} Model', () => {
+${tests}
+})
+`;
+
+  const generatedCode = `${model} \r\n ${test}`;
 
   return generatedCode;
 }

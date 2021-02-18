@@ -2,7 +2,7 @@
   "name": "generate-from-protos",
   "displayName": "Automatic generate typescript class from a proto",
   "description": "Automatic generate typescript class from a proto",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "suancarloj",
   "author": "Juan Carlos Sanchez Cardenas <jcsanchezcardenas@gmail.com>",
   "repository": {

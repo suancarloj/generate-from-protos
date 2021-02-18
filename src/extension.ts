@@ -115,7 +115,9 @@ export function activate(context: vscode.ExtensionContext) {
         // });
       } catch (error) {
         console.log(error);
-        vscode.window.showErrorMessage('Something went wrong! look in the vscode developer tools"');
+        vscode.window.showErrorMessage(
+          'Something went wrong! look in the vscode developer tools"',
+        );
       }
     },
   );
@@ -159,7 +161,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.env.clipboard.writeText(model);
       } catch (error) {
         console.log(error);
-        vscode.window.showErrorMessage('Something went wrong! look in the vscode developer tools"');
+        vscode.window.showErrorMessage(
+          'Something went wrong! look in the vscode developer tools"',
+        );
       }
     },
   );
@@ -208,13 +212,14 @@ function createModel(textProperties: string) {
     a.split(' ').reverse()[0] < b.split(' ').reverse()[0] ? -1 : 1,
   );
   // let properties: Array<string> = [];
-  let properties: string = '';
+  let properties = '';
+  let className = '';
+  let camelClassName = '';
+  let interfaces = '';
+  let constructors = '';
+  let getters = '';
+  let tests = '';
 
-  let className,
-    camelClassName = '',
-    interfaces = '',
-    constructors = '',
-    getters = '';
   sortedRows.forEach((r) => {
     const row = r.split(' ').reverse();
     const [property, type, ...rules] = row;
@@ -244,12 +249,21 @@ function createModel(textProperties: string) {
       )}(): ${t}${optionalReturnType} {\r\n`;
       getters += `    return this.${prop};\r\n`;
       getters += `  }\r\n\r\n`;
+
+      tests += `  it('New Set/Get ${prop}', async () => {\r\n`;
+      tests += `    const ${camelClassName}Props: ${camelClassName}Props = {\r\n`;
+      tests += `      ${prop}: ,\r\n`;
+      tests += `    };\r\n\r\n`;
+      tests += `    const ${camelClassName} = new ${className}(${camelClassName}Props);\r\n`;
+      tests += `    await expect(${camelClassName}.get${pascalCase(
+        prop,
+      )}()).toEqual(${camelClassName}Props.${prop});\r\n`;
+      tests += `  });\r\n\r\n`;
     }
-    console.log(r);
   });
 
-  const generatedCode = `
-export interface ${className}Props {
+  const model = `
+interface ${className}Props {
 ${interfaces}}
 
 export class ${className} {
@@ -261,27 +275,39 @@ ${constructors}  }
 ${getters}}
 `;
 
+  const test = `
+import { ${className}, ${className}Props } from './${className}';
+describe('${className} Model', () => {
+${tests}
+})
+`;
+
+  const generatedCode = `${model} \r\n ${test}`;
+
   return generatedCode;
 }
-
 
 function createService(textProperties: string) {
   let rows = textProperties
     .split('\n')
     .map((x) => x.replace(/[{};]/, '').trim())
     .filter((x) => x);
-  
+
   const interfaceRow = rows.shift();
   const interfaceMatch = interfaceRow?.match(/interface (\w+)(<(.*)>)?/);
-  const [,interfaceName,interfaceType] = interfaceMatch ?? [];
+  const [, interfaceName, interfaceType] = interfaceMatch ?? [];
 
-  const functions = rows.map(r => `  async ${r} {\r\n\r\n  }\r\n\r\n`).join('');
+  const functions = rows
+    .map((r) => `  async ${r} {\r\n\r\n  }\r\n\r\n`)
+    .join('');
 
   const generatedCode = `
 import { Inject, Injectable } from '@nestjs/common';
 
 @Injectable()
-export class ${interfaceName} implements ${interfaceName}${interfaceType ?? ''} {
+export class ${interfaceName} implements ${interfaceName}${
+    interfaceType ?? ''
+  } {
 ${functions}}
 `;
 
