@@ -251,7 +251,7 @@ function createModel(textProperties: string) {
       getters += `  }\r\n\r\n`;
 
       tests += `  it('New Set/Get ${prop}', async () => {\r\n`;
-      tests += `    const ${camelClassName}Props: ${camelClassName}Props = {\r\n`;
+      tests += `    const ${camelClassName}Props: ${className}Props = {\r\n`;
       tests += `      ${prop}: ,\r\n`;
       tests += `    };\r\n\r\n`;
       tests += `    const ${camelClassName} = new ${className}(${camelClassName}Props);\r\n`;
@@ -263,7 +263,7 @@ function createModel(textProperties: string) {
   });
 
   const model = `
-interface ${className}Props {
+export interface ${className}Props {
 ${interfaces}}
 
 export class ${className} {
